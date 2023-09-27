@@ -1,12 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 var db = make(map[string]string)
+
+type Student struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+}
 
 func setupRouter() *gin.Engine {
 	// Disable Console Color
@@ -18,7 +24,7 @@ func setupRouter() *gin.Engine {
 		c.String(http.StatusOK, "pong")
 	})
 
-	// Get user value
+	// 从path获取参数
 	r.GET("/user/:name", func(c *gin.Context) {
 		user := c.Params.ByName("name")
 		value, ok := db[user]
@@ -27,6 +33,33 @@ func setupRouter() *gin.Engine {
 		} else {
 			c.JSON(http.StatusOK, gin.H{"user": user, "status": "no value"})
 		}
+	})
+	// 从？后边获取参数
+	r.GET("/name", func(c *gin.Context) {
+		query := c.Query("name")
+		//等价于：c.Request.URL.Query().Get("name")
+		c.JSON(http.StatusOK, "Hello "+query)
+	})
+
+	// 获取请求体
+	//r.POST("/stu", func(c *gin.Context) {
+	//	body := c.Request.Body
+	//	all, err := io.ReadAll(body)
+	//	stu := Student{}
+	//	json.Unmarshal(all, &stu)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	c.JSON(http.StatusOK, stu)
+	//})
+
+	r.POST("/stu", func(c *gin.Context) {
+		stu := Student{}
+		// c.ShouldBindJSON 使用了 c.Request.Body，不可重用。
+		c.ShouldBindJSON(&stu)
+		str := fmt.Sprintf("%+v", stu)
+		fmt.Println(str)
+		c.JSON(http.StatusOK, stu)
 	})
 
 	// Authorized group (uses gin.BasicAuth() middleware)
